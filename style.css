@@ -808,6 +808,62 @@ a { color: inherit; text-decoration: none; }
 .reveal-armed .hero-content > *:nth-child(4) { transition-delay: 0.30s; }
 .reveal-armed .hero-stats { transition-delay: 0.38s; }
 
+/* default: fully visible, no dependency on JS or classes */
+.about-section, .capabilities-section, .flagship-section,
+.record-section, .credentials-section, .contact-section {
+    opacity: 1;
+    transform: none;
+}
+
+/* only once JS confirms it's ready to animate, arm the entrance */
+.scroll-armed {
+    opacity: 0;
+    transform: translateY(24px);
+}
+.scroll-armed.in-view {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+
+/* Staggering for capability cards */
+.scroll-armed .capability-card {
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+}
+.scroll-armed.in-view .capability-card { opacity: 1; transform: translateY(0); }
+.scroll-armed.in-view .capability-card:nth-child(1) { transition-delay: 0.1s; }
+.scroll-armed.in-view .capability-card:nth-child(2) { transition-delay: 0.18s; }
+.scroll-armed.in-view .capability-card:nth-child(3) { transition-delay: 0.26s; }
+.scroll-armed.in-view .capability-card:nth-child(4) { transition-delay: 0.34s; }
+
+/* Staggering for record timeline entries */
+.scroll-armed .timeline-entry {
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+}
+.scroll-armed.in-view .timeline-entry { opacity: 1; transform: translateY(0); }
+.scroll-armed.in-view .timeline-entry:nth-child(1) { transition-delay: 0.1s; }
+.scroll-armed.in-view .timeline-entry:nth-child(2) { transition-delay: 0.18s; }
+.scroll-armed.in-view .timeline-entry:nth-child(3) { transition-delay: 0.26s; }
+.scroll-armed.in-view .timeline-entry:nth-child(4) { transition-delay: 0.34s; }
+.scroll-armed.in-view .timeline-entry:nth-child(5) { transition-delay: 0.42s; }
+
+/* Staggering for credential rows */
+.scroll-armed .cred-row {
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+}
+.scroll-armed.in-view .cred-row { opacity: 1; transform: translateY(0); }
+.scroll-armed.in-view .cred-row:nth-child(1) { transition-delay: 0.1s; }
+.scroll-armed.in-view .cred-row:nth-child(2) { transition-delay: 0.16s; }
+.scroll-armed.in-view .cred-row:nth-child(3) { transition-delay: 0.22s; }
+.scroll-armed.in-view .cred-row:nth-child(4) { transition-delay: 0.28s; }
+.scroll-armed.in-view .cred-row:nth-child(5) { transition-delay: 0.34s; }
+.scroll-armed.in-view .cred-row:nth-child(6) { transition-delay: 0.4s; }
+.scroll-armed.in-view .cred-row:nth-child(7) { transition-delay: 0.46s; }
+.scroll-armed.in-view .cred-row:nth-child(n+8) { transition-delay: 0.52s; }
+
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     * {
@@ -816,9 +872,14 @@ a { color: inherit; text-decoration: none; }
         transition-duration: 0.01ms !important;
     }
     .reveal-armed .hero-content > *,
-    .reveal-armed .hero-stats {
+    .reveal-armed .hero-stats,
+    .scroll-armed,
+    .scroll-armed .capability-card,
+    .scroll-armed .timeline-entry,
+    .scroll-armed .cred-row {
         opacity: 1 !important;
         transform: none !important;
+        transition-delay: 0ms !important;
     }
     .custom-cursor { display: none !important; }
     .signal-trace { display: none !important; }

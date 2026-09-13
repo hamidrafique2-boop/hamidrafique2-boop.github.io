@@ -150,9 +150,38 @@
            5. Hero entrance — one orchestrated reveal, CSS-driven
            ---------------------------------------------------------------- */
         var hero = document.querySelector(".hero-section");
+        var heroTypingContainer = document.getElementById("hero-typing-container");
+
         if (hero && !prefersReducedMotion) {
             requestAnimationFrame(function () {
                 hero.classList.add("reveal-armed");
+                
+                if (heroTypingContainer) {
+                    var accessibleSpan = heroTypingContainer.querySelector(".hero-title-accessible");
+                    if (accessibleSpan) {
+                        var t1 = "I study how systems break, ";
+                        var t2 = "so I can build the ones that notice.";
+                        var i1 = 0, i2 = 0;
+                        function typeChar() {
+                            if (i1 < t1.length) {
+                                i1++;
+                                accessibleSpan.textContent = t1.substring(0, i1);
+                                setTimeout(typeChar, 18);
+                            } else if (i2 < t2.length) {
+                                i2++;
+                                accessibleSpan.textContent = "";
+                                accessibleSpan.appendChild(document.createTextNode(t1));
+                                var lineSpan = document.createElement("span");
+                                lineSpan.className = "hero-title-line";
+                                lineSpan.textContent = t2.substring(0, i2);
+                                accessibleSpan.appendChild(lineSpan);
+                                setTimeout(typeChar, 18);
+                            }
+                        }
+                        typeChar();
+                    }
+                }
+
                 requestAnimationFrame(function () { hero.classList.add("reveal-in"); });
             });
         }
@@ -163,6 +192,30 @@
         var chips = Array.prototype.slice.call(document.querySelectorAll(".filter-chip"));
         var credRows = Array.prototype.slice.call(document.querySelectorAll(".cred-row"));
         var emptyState = document.getElementById("credentials-empty");
+
+        /* ----------------------------------------------------------------
+           6b. Scroll-triggered section reveals
+           ---------------------------------------------------------------- */
+        if ("IntersectionObserver" in window && !prefersReducedMotion) {
+            var scrollSections = document.querySelectorAll(".about-section, .capabilities-section, .flagship-section, .record-section, .credentials-section, .contact-section");
+            
+            scrollSections.forEach(function(sec) {
+                sec.classList.add("scroll-armed");
+            });
+
+            var revealObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("in-view");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            scrollSections.forEach(function(sec) {
+                revealObserver.observe(sec);
+            });
+        }
 
         chips.forEach(function (chip) {
             chip.addEventListener("click", function () {
