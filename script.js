@@ -150,9 +150,9 @@
            5. Hero entrance — one orchestrated reveal, CSS-driven
            ---------------------------------------------------------------- */
         var hero = document.querySelector(".hero-section");
-        if (hero) {
-            hero.classList.add("reveal-ready");
+        if (hero && !prefersReducedMotion) {
             requestAnimationFrame(function () {
+                hero.classList.add("reveal-armed");
                 requestAnimationFrame(function () { hero.classList.add("reveal-in"); });
             });
         }
