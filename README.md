@@ -1,109 +1,59 @@
-<div align="center">
+# Hamid Rafique — Portfolio
 
-# Hamid Rafique
-### Cybersecurity Portfolio: "Signal & Precision"
+Personal portfolio site for Hamid Rafique (CTF alias **Cindrix**), BS Cybersecurity
+student at Air University's National Cyber Security Academy (NCSA), Islamabad.
 
-**Blue Team / SOC Aspirant · Competitive CTF Player · Builder**
+Live: https://hamidrafique2-boop.github.io/hamidrafique.github.io/
 
-[![Live Site](https://img.shields.io/badge/live-hamidrafique.github.io-D97745?style=for-the-badge)](https://hamidrafique2-boop.github.io/hamidrafique.github.io/)
-[![Resume](https://img.shields.io/badge/resume-download-4A9B8E?style=for-the-badge)](./Hamid_Rafique_Resume.pdf)
-[![LinkedIn](https://img.shields.io/badge/linkedin-connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/hamid-rafique-299006381)
+## Stack
 
-</div>
+Static site, no build step: `index.html`, `style.css`, `script.js`. Deployed via
+GitHub Pages. Fonts (Fraunces, Inter, IBM Plex Mono) and Font Awesome icons load
+from CDN; everything else is self-contained.
 
----
+## Design system — "Signal Discipline"
 
-## About
+The visual language is built around *finding signal in noise* — the shared
+instinct behind CTF exploitation and SOC detection work — rather than generic
+hacker-terminal or neon-matrix tropes.
 
-I'm a 3rd semester BS Cybersecurity student at Air University's National Cyber Security Academy in Islamabad, building toward blue team and SOC analyst work while staying sharp offensively through competitive CTF play (as *Cindrix*). 
+- **Color**: warm charcoal/paper neutrals with a single burnt-orange accent
+  (`--signal`) and a muted verified-state green (`--verify`), defined as CSS
+  custom properties in `:root` and `:root.theme-light`.
+- **Type**: Fraunces (display/headlines), Inter (body/UI), IBM Plex Mono
+  (functional data only — timestamps, filter chips, tags).
+- **Signature motif**: a persistent SVG "signal trace" line that redraws on
+  scroll and settles as the reader moves through the page.
 
-I designed and shipped **Fractured Signal**, a custom CTF platform used by ~94 students, co-authored a research paper on Windows persistence attacks, and I'm currently working through a 10-project self-directed SOC detection portfolio.
+## Sections
 
-This repository contains the source code for my portfolio.
+`Hero -> About -> Capabilities -> Fractured Signal (flagship) -> Field Record
+-> Credentials -> Contact`
 
-**Live:** [hamidrafique2-boop.github.io/hamidrafique.github.io](https://hamidrafique2-boop.github.io/hamidrafique.github.io/)
+## Theme system
 
----
+Dark/light toggle, persisted to `localStorage`, respects
+`prefers-color-scheme` on first visit, and applies before first paint via a
+small inline script in `<head>` to avoid a flash of the wrong theme.
 
-## The "Signal & Precision" Concept
+## Accessibility
 
-This iteration of the portfolio moves away from cliché "terminal hacker" aesthetics (neon-green-on-black, glitch text). Instead, it adopts a premium **Signal & Precision** design language suited for modern enterprise cybersecurity—focusing on clarity, intelligent systems, and trust architecture.
+Semantic landmarks, skip-to-content link, keyboard-operable mobile menu
+(Escape to close, scroll lock while open), visible focus states, and full
+`prefers-reduced-motion` support (disables the signal trace, custom cursor,
+and hero entrance animation; everything remains fully usable and legible with
+motion off).
 
-The color palette leverages a full light/dark theme system. Light mode uses a warm off-white (`#FAF8F5`) with deep charcoal text, while Dark mode uses deep obsidian (`#111111`) with warm white text. Both are accented by a signature Burnt Orange (`#D97745`) to highlight active signals, data points, and interactions.
+## Content
 
-To make the page feel like a single continuous intelligence dashboard, it utilizes a smooth scroll library (Lenis) synced with scroll-triggered narrative reveals (GSAP). An idle-guarded, high-performance canvas "Signal Line" acts as the visual spine of the page, adjusting its rendering based on the active theme and device capabilities.
+All facts (dates, placements, certifications, project details) are sourced
+directly from `Hamid_Rafique_Resume.pdf` and the `certificates/` folder — no
+invented claims, metrics, or credentials.
 
----
-
-## What's on the site
-
-| Section | Description |
-|---|---|
-| **Hero** | Identity, positioning, dynamic signal rotation, and verified statistics. |
-| **Identity (About)** | Education, current focus, and the "offense-informs-defense" thesis. |
-| **Capabilities** | Technical skills broken out by Defensive, Offensive, Tooling, and Languages. |
-| **Proof of Work** | Connecting core security skills directly to verified repository evidence. |
-| **Flagship Build** | Dedicated interactive case-study map for the *Fractured Signal* CTF platform. |
-| **Field Record** | A timeline of competitive CTF results, academic projects, and published research. |
-| **Credentials** | Verified certifications, including the complete Google Cybersecurity sub-certificates. |
-| **Connect** | Direct contact lines with clear external link indicators. |
-
----
-
-## Tech Stack & Architecture
-
-This site adheres to a strict zero-backend, zero-build-step requirement, deploying directly to GitHub Pages as static files.
-
-| Layer | Technology |
-|---|---|
-| **Structure** | Semantic HTML5, accessible ARIA landmarks, Open Graph / JSON-LD SEO. |
-| **Styling** | Vanilla CSS3 (Custom properties for Light/Dark mode, Grid, Flexbox, fluid typography). |
-| **Motion** | Vanilla JS, Lenis (Smooth Scroll), GSAP + ScrollTrigger (Animations). |
-| **Performance** | GSAP ScrollTrigger / Idle-guarded Canvas API / IntersectionObserver UI updates. |
-
-### Architectural Decisions & Trade-offs
-- **Light/Dark Mode System:** Implemented entirely with CSS Custom Properties and a lightweight inline script in the `<head>` to prevent flash of incorrect theme (FOUC) while respecting the OS `prefers-color-scheme`.
-- **CDN Usage & Graceful Degradation:** To achieve Awwwards-caliber motion without a Node build step, Lenis and GSAP are loaded via pinned-version CDNs. The site implements **CSS-first visibility**: if JS fails, is disabled, or CDNs are blocked (e.g. strict corporate networks), all content is fully visible and defaults to native scrolling.
-- **Accessibility (a11y):** The mobile menu implements full focus-trapping, body scroll lock, and Escape key support. The CSS includes `@media (prefers-reduced-motion)` which disables smooth scroll, complex reveals, and background canvas rendering for users who request it.
-- **Performance:** The visual "Signal Line" is rendered on an HTML5 `<canvas>`. To prevent GPU memory leaks and battery drain, the `requestAnimationFrame` loop is actively idle-guarded, pausing automatically if no scroll or mouse movement is detected for ~60 frames. On mobile widths (<=768px), the canvas is disabled entirely in favor of a static CSS fallback.
-
----
-
-## File Structure
-
-```text
-hamidrafique.github.io/
-├── index.html                  # Semantic structure, SEO meta, content
-├── style.css                   # Theme system, fluid typography, components
-├── script.js                   # Theme toggle, Lenis, GSAP, canvas, system status
-├── favicon.svg                 # Scalable vector favicon
-├── README.md                   # This document
-├── Hamid_Rafique_Resume.pdf    # Current resume
-└── certificates/               # PDF artifacts for all credentials (19 files)
-```
-
----
-
-## Updating Content (For Future Editors)
-
-All content lives directly in `index.html`. 
-
-- **Add a CTF or Project:** Duplicate a `<div class="timeline-item">` block in the `#experience` section.
-- **Update Skills:** Modify the `<li>` items within the `.bento-card` lists in the `#capabilities` section.
-- **Update Proof of Work:** Add a new `<div class="proof-item">` to the `.proof-grid` connecting a skill to evidence.
-- **Add a Certificate:** Drop the PDF into the `certificates/` folder, then add a link in the `#credentials` section.
-
-To deploy, simply edit the HTML/CSS/JS files and push to the `main` branch. GitHub Pages will redeploy the static site automatically.
-
----
-
-## Running Locally
-
-Since there's no build step, you can serve the directory using any basic HTTP server:
+## Local development
 
 ```bash
-git clone https://github.com/hamidrafique2-boop/hamidrafique.github.io.git
-cd hamidrafique.github.io
 python3 -m http.server 8000
-# open http://localhost:8000
 ```
+
+Then open `http://localhost:8000`.

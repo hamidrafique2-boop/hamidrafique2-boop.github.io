@@ -1,500 +1,262 @@
 /**
- * script.js
- * Interaction Layer — "Signal & Precision" Portfolio
- * Theme · Dynamic Hero · System Status · Case Study · Canvas · Cursor
+ * script.js — Hamid Rafique portfolio ("Signal Discipline")
+ * Vanilla JS, no build step. Every feature degrades gracefully if a
+ * selector is missing or a browser API is unsupported.
  */
+(function () {
+    "use strict";
 
-document.addEventListener("DOMContentLoaded", () => {
-    // === Preferences & Device Detection ===
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isMobile = window.innerWidth <= 768;
-    const hasTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var root = document.documentElement;
 
-    // Footer year
-    const yearEl = document.getElementById("year");
-    if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-    // ========================================================================
-    // 1. THEME SYSTEM
-    // ========================================================================
-    const themeToggles = document.querySelectorAll("#theme-toggle, #theme-toggle-mobile");
-
-    function getTheme() {
-        return document.documentElement.getAttribute("data-theme") || "light";
-    }
-
-    function setTheme(theme) {
-        document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem("theme", theme);
-        const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
-        themeToggles.forEach(btn => btn.setAttribute("aria-label", label));
-    }
-
-    // Initialize labels
-    setTheme(getTheme());
-
-    themeToggles.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const next = getTheme() === "dark" ? "light" : "dark";
-            setTheme(next);
-        });
-    });
-
-    // Listen for OS theme changes
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-        if (!localStorage.getItem("theme")) {
-            setTheme(e.matches ? "dark" : "light");
+    /* ----------------------------------------------------------------
+       0. Theme system — localStorage + OS preference, no flash
+       (the blocking inline script in <head> already set the class
+       before first paint; this wires up the toggle buttons)
+       ---------------------------------------------------------------- */
+    function applyTheme(theme) {
+        if (theme === "light") {
+            root.classList.add("theme-light");
+        } else {
+            root.classList.remove("theme-light");
         }
-    });
+        try { localStorage.setItem("theme", theme); } catch (e) { /* storage unavailable */ }
 
-    // ========================================================================
-    // 2. MOBILE MENU
-    // ========================================================================
-    const mobileBtn = document.getElementById("mobile-menu-btn");
-    const mobileOverlay = document.getElementById("mobile-nav-overlay");
-    let menuOpen = false;
-
-    function openMenu() {
-        menuOpen = true;
-        mobileOverlay.classList.add("active");
-        mobileOverlay.setAttribute("aria-hidden", "false");
-        mobileBtn.setAttribute("aria-expanded", "true");
-        mobileBtn.setAttribute("aria-label", "Close menu");
-        document.body.classList.add("menu-open");
-        // Focus first link
-        const firstLink = mobileOverlay.querySelector("a");
-        if (firstLink) firstLink.focus();
+        var toggle = document.getElementById("theme-toggle");
+        if (toggle) {
+            toggle.setAttribute("aria-pressed", theme === "light" ? "true" : "false");
+            toggle.setAttribute("aria-label", theme === "light" ? "Switch to dark theme" : "Switch to light theme");
+        }
+        var mobileToggle = document.getElementById("mobile-theme-toggle");
+        if (mobileToggle) {
+            var label = mobileToggle.querySelector("span");
+            var icon = mobileToggle.querySelector("i");
+            if (label) label.textContent = theme === "light" ? "Light mode" : "Dark mode";
+            if (icon) icon.className = theme === "light" ? "fa-solid fa-sun" : "fa-solid fa-moon";
+        }
     }
 
-    function closeMenu() {
-        menuOpen = false;
-        mobileOverlay.classList.remove("active");
-        mobileOverlay.setAttribute("aria-hidden", "true");
-        mobileBtn.setAttribute("aria-expanded", "false");
-        mobileBtn.setAttribute("aria-label", "Open menu");
-        document.body.classList.remove("menu-open");
-        mobileBtn.focus();
+    function currentTheme() {
+        return root.classList.contains("theme-light") ? "light" : "dark";
     }
 
-    if (mobileBtn && mobileOverlay) {
-        mobileBtn.addEventListener("click", () => {
-            menuOpen ? closeMenu() : openMenu();
-        });
-
-        // Close on link click
-        mobileOverlay.querySelectorAll("a").forEach(link => {
-            link.addEventListener("click", closeMenu);
-        });
-
-        // Escape key
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && menuOpen) {
-                closeMenu();
-            }
-        });
+    function toggleTheme() {
+        applyTheme(currentTheme() === "light" ? "dark" : "light");
     }
 
-    // ========================================================================
-    // 3. DYNAMIC HERO TEXT
-    // ========================================================================
-    const dynamicTextEl = document.getElementById("dynamic-text");
-    const signals = [
-        "Detection Engineering",
-        "Network Security",
-        "Web Exploitation",
-        "CTF Research",
-        "SOC Analysis",
-        "Security Engineering"
-    ];
-    let signalIndex = 0;
+    document.addEventListener("DOMContentLoaded", function () {
+        var toggle = document.getElementById("theme-toggle");
+        var mobileToggle = document.getElementById("mobile-theme-toggle");
+        if (toggle) toggle.addEventListener("click", toggleTheme);
+        if (mobileToggle) mobileToggle.addEventListener("click", toggleTheme);
+        // Sync label state with whatever the inline head-script already applied.
+        applyTheme(currentTheme());
 
-    if (dynamicTextEl && !prefersReducedMotion) {
-        setInterval(() => {
-            dynamicTextEl.style.opacity = "0";
-            setTimeout(() => {
-                signalIndex = (signalIndex + 1) % signals.length;
-                dynamicTextEl.textContent = signals[signalIndex];
-                dynamicTextEl.style.opacity = "1";
-            }, 350);
-        }, 3200);
-    }
+        /* ----------------------------------------------------------------
+           1. Footer year
+           ---------------------------------------------------------------- */
+        var yearEl = document.getElementById("year");
+        if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-    // ========================================================================
-    // 4. SYSTEM STATUS INDICATOR
-    // ========================================================================
-    const ssValueEl = document.getElementById("ss-value");
-    const statusSections = document.querySelectorAll("[data-status]");
+        /* ----------------------------------------------------------------
+           2. Mobile nav — overlay, Escape key, scroll lock
+           ---------------------------------------------------------------- */
+        var mobileBtn = document.getElementById("mobile-menu-btn");
+        var mobileOverlay = document.getElementById("mobile-nav-overlay");
 
-    if (ssValueEl && statusSections.length > 0 && !isMobile) {
-        const statusObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const newVal = entry.target.getAttribute("data-status");
-                    if (newVal && ssValueEl.textContent !== newVal) {
-                        ssValueEl.style.opacity = "0";
-                        setTimeout(() => {
-                            ssValueEl.textContent = newVal;
-                            ssValueEl.style.opacity = "1";
-                        }, 150);
-                    }
-                }
+        function closeMobileNav() {
+            if (!mobileOverlay || !mobileBtn) return;
+            mobileOverlay.classList.remove("active");
+            mobileOverlay.setAttribute("aria-hidden", "true");
+            mobileBtn.setAttribute("aria-expanded", "false");
+            document.body.style.overflow = "";
+            document.documentElement.style.overflow = "";
+        }
+        function openMobileNav() {
+            if (!mobileOverlay || !mobileBtn) return;
+            mobileOverlay.classList.add("active");
+            mobileOverlay.setAttribute("aria-hidden", "false");
+            mobileBtn.setAttribute("aria-expanded", "true");
+            document.body.style.overflow = "hidden";
+            document.documentElement.style.overflow = "hidden";
+        }
+
+        if (mobileBtn && mobileOverlay) {
+            mobileBtn.addEventListener("click", function () {
+                var isOpen = mobileOverlay.classList.contains("active");
+                if (isOpen) { closeMobileNav(); } else { openMobileNav(); }
             });
-        }, { threshold: 0.3 });
-
-        statusSections.forEach(section => statusObserver.observe(section));
-    }
-
-    // ========================================================================
-    // 5. CASE STUDY MAP (Flagship)
-    // ========================================================================
-    const csNodes = document.querySelectorAll(".cs-node");
-    const csDetailText = document.getElementById("cs-detail-text");
-
-    csNodes.forEach(node => {
-        function activate() {
-            // Deactivate siblings
-            csNodes.forEach(n => {
-                n.classList.remove("active");
-                n.setAttribute("aria-expanded", "false");
+            mobileOverlay.querySelectorAll("a").forEach(function (link) {
+                link.addEventListener("click", closeMobileNav);
             });
-            node.classList.add("active");
-            node.setAttribute("aria-expanded", "true");
-            if (csDetailText) {
-                csDetailText.textContent = node.getAttribute("data-detail") || "";
-            }
-        }
-        node.addEventListener("click", activate);
-        node.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                activate();
-            }
-        });
-    });
-
-    // ========================================================================
-    // 6. SMOOTH SCROLL (Lenis)
-    // ========================================================================
-    let lenis;
-    if (!prefersReducedMotion && typeof Lenis !== "undefined") {
-        lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            direction: "vertical",
-            gestureDirection: "vertical",
-            smooth: true,
-            mouseMultiplier: 1,
-            smoothTouch: false,
-            touchMultiplier: 2,
-            infinite: false,
-        });
-
-        function rafLenis(time) {
-            lenis.raf(time);
-            requestAnimationFrame(rafLenis);
-        }
-        requestAnimationFrame(rafLenis);
-    }
-
-    // ========================================================================
-    // 7. GSAP SCROLL REVEALS
-    // ========================================================================
-    if (!prefersReducedMotion && typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
-        gsap.registerPlugin(ScrollTrigger);
-
-        if (lenis) {
-            lenis.on("scroll", ScrollTrigger.update);
-            gsap.ticker.add((time) => { lenis.raf(time * 1000); });
-            gsap.ticker.lagSmoothing(0);
-        }
-
-        // Reveal elements
-        const revealElements = document.querySelectorAll(".gs-reveal");
-        revealElements.forEach((el) => {
-            el.classList.add("js-hidden");
-            gsap.set(el, { autoAlpha: 0, y: 30 });
-
-            ScrollTrigger.create({
-                trigger: el,
-                start: "top 88%",
-                onEnter: () => {
-                    gsap.to(el, {
-                        autoAlpha: 1,
-                        y: 0,
-                        duration: 0.7,
-                        ease: "power3.out",
-                        clearProps: "all"
-                    });
-                },
-                once: true
-            });
-        });
-
-        // Stagger bento cards
-        const bentoCards = gsap.utils.toArray(".bento-card");
-        if (bentoCards.length > 0) {
-            gsap.set(bentoCards, { autoAlpha: 0, y: 25 });
-            ScrollTrigger.create({
-                trigger: ".bento-grid",
-                start: "top 82%",
-                onEnter: () => {
-                    gsap.to(bentoCards, {
-                        autoAlpha: 1,
-                        y: 0,
-                        duration: 0.5,
-                        stagger: 0.08,
-                        ease: "power2.out",
-                        clearProps: "all"
-                    });
-                },
-                once: true
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") closeMobileNav();
             });
         }
 
-        // Stagger proof items
-        const proofItems = gsap.utils.toArray(".proof-item");
-        if (proofItems.length > 0) {
-            gsap.set(proofItems, { autoAlpha: 0, y: 20 });
-            ScrollTrigger.create({
-                trigger: ".proof-grid",
-                start: "top 82%",
-                onEnter: () => {
-                    gsap.to(proofItems, {
-                        autoAlpha: 1,
-                        y: 0,
-                        duration: 0.5,
-                        stagger: 0.1,
-                        ease: "power2.out",
-                        clearProps: "all"
-                    });
-                },
-                once: true
-            });
-        }
-
-        // ========================================================================
-        // 7.1 "NOISE -> SIGNAL -> ORDER" INTERACTION SYSTEM
-        // ========================================================================
-
-        // A. Text Assembly (About Section)
-        const splitContainers = document.querySelectorAll(".split-text-container");
-        splitContainers.forEach(container => {
-            const paragraphs = container.querySelectorAll(".split-text");
-            let allWords = [];
-            
-            paragraphs.forEach(p => {
-                const words = p.innerText.split(/\s+/);
-                p.innerHTML = "";
-                words.forEach(word => {
-                    if (word.trim() === "") return;
-                    const span = document.createElement("span");
-                    span.className = "signal-word";
-                    span.setAttribute("aria-hidden", "true");
-                    span.innerText = word + " ";
-                    p.appendChild(span);
-                    allWords.push(span);
-                });
-            });
-
-            // Set initial scattered state
-            const scatterRadius = window.innerWidth < 768 ? 15 : 40;
-            allWords.forEach(word => {
-                const tx = (Math.random() - 0.5) * scatterRadius * 2;
-                const ty = (Math.random() - 0.5) * scatterRadius * 2;
-                const rot = (Math.random() - 0.5) * 10;
-                const blur = Math.random() * 2;
-                
-                gsap.set(word, {
-                    x: tx,
-                    y: ty,
-                    rotation: rot,
-                    opacity: 0.2 + Math.random() * 0.3,
-                    filter: `blur(${blur}px)`
-                });
-            });
-
-            // Scrubbed assembly
-            gsap.to(allWords, {
-                x: 0,
-                y: 0,
-                rotation: 0,
-                opacity: 1,
-                filter: "blur(0px)",
-                duration: 1,
-                stagger: 0.005,
-                ease: "power2.out",
-                scrollTrigger: {
-                    trigger: container,
-                    start: "top 80%",
-                    end: "center 40%",
-                    scrub: 1
-                }
-            });
-        });
-
-        // B. Proof of Work Connecting Lines
-        const proofArrows = document.querySelectorAll(".proof-arrow svg");
-        proofArrows.forEach(arrow => {
-            gsap.to(arrow, {
-                strokeDashoffset: 0,
-                ease: "none",
-                scrollTrigger: {
-                    trigger: arrow.closest(".proof-item"),
-                    start: "top 75%",
-                    end: "bottom 60%",
-                    scrub: 0.5
-                }
-            });
-        });
-
-        // C. Case Study Map Connectors (Flagship)
-        const csConnectors = document.querySelectorAll(".cs-connector span");
-        gsap.set(csConnectors, { scaleX: 0, transformOrigin: "left center" });
-        ScrollTrigger.create({
-            trigger: ".case-study-map",
-            start: "top 80%",
-            end: "bottom 50%",
-            scrub: 1,
-            animation: gsap.to(csConnectors, {
-                scaleX: 1,
-                stagger: 0.2,
-                ease: "none"
+        /* ----------------------------------------------------------------
+           3. Active section indicator in nav (IntersectionObserver)
+           ---------------------------------------------------------------- */
+        var navLinks = Array.prototype.slice.call(document.querySelectorAll(".main-nav .nav-link"));
+        var sections = navLinks
+            .map(function (link) {
+                var id = link.getAttribute("href");
+                return id && id.charAt(0) === "#" ? document.querySelector(id) : null;
             })
-        });
+            .filter(Boolean);
 
-        // D. Timeline Fill & Nodes
-        const timelineFill = document.getElementById("timeline-fill");
-        if (timelineFill) {
-            gsap.to(timelineFill, {
-                scaleY: 1,
-                ease: "none",
-                scrollTrigger: {
-                    trigger: ".timeline-container",
-                    start: "top 60%",
-                    end: "bottom 60%",
-                    scrub: 0.5
-                }
-            });
+        if ("IntersectionObserver" in window && sections.length) {
+            var byId = {};
+            navLinks.forEach(function (link) { byId[link.getAttribute("href")] = link; });
 
-            const timelineItems = document.querySelectorAll(".timeline-item");
-            timelineItems.forEach(item => {
-                ScrollTrigger.create({
-                    trigger: item,
-                    start: "top 60%", // sync with line fill
-                    onEnter: () => item.classList.add("active-node"),
-                    onLeaveBack: () => item.classList.remove("active-node")
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    var link = byId["#" + entry.target.id];
+                    if (!link) return;
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(function (l) { l.classList.remove("is-active"); });
+                        link.classList.add("is-active");
+                    }
                 });
+            }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
+
+            sections.forEach(function (s) { observer.observe(s); });
+        }
+
+        /* ----------------------------------------------------------------
+           4. Header hide-on-scroll-down / show-on-scroll-up
+           ---------------------------------------------------------------- */
+        var header = document.getElementById("site-header");
+        if (header) {
+            var lastScroll = window.scrollY;
+            var ticking = false;
+            window.addEventListener("scroll", function () {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(function () {
+                    var current = window.scrollY;
+                    if (current > lastScroll && current > 160) {
+                        header.classList.add("is-hidden");
+                    } else {
+                        header.classList.remove("is-hidden");
+                    }
+                    lastScroll = current;
+                    ticking = false;
+                });
+            }, { passive: true });
+        }
+
+        /* ----------------------------------------------------------------
+           5. Hero entrance — one orchestrated reveal, CSS-driven
+           ---------------------------------------------------------------- */
+        var hero = document.querySelector(".hero-section");
+        if (hero) {
+            hero.classList.add("reveal-ready");
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () { hero.classList.add("reveal-in"); });
             });
         }
-    }
 
-    // ========================================================================
-    // 8. CUSTOM CURSOR
-    // ========================================================================
-    const cursor = document.getElementById("custom-cursor");
-    if (cursor && !hasTouch && !prefersReducedMotion) {
-        let mouseX = 0, mouseY = 0;
-        let cursorX = 0, cursorY = 0;
-        const speed = 0.18;
+        /* ----------------------------------------------------------------
+           6. Credential filters
+           ---------------------------------------------------------------- */
+        var chips = Array.prototype.slice.call(document.querySelectorAll(".filter-chip"));
+        var credRows = Array.prototype.slice.call(document.querySelectorAll(".cred-row"));
+        var emptyState = document.getElementById("credentials-empty");
 
-        window.addEventListener("mousemove", (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+        chips.forEach(function (chip) {
+            chip.addEventListener("click", function () {
+                chips.forEach(function (c) { c.classList.remove("is-active"); });
+                chip.classList.add("is-active");
+                var filter = chip.getAttribute("data-filter");
+                var visibleCount = 0;
+                credRows.forEach(function (row) {
+                    var match = filter === "all" || row.getAttribute("data-category") === filter;
+                    row.classList.toggle("is-hidden", !match);
+                    if (match) visibleCount++;
+                });
+                if (emptyState) emptyState.hidden = visibleCount !== 0;
+            });
         });
 
-        const hoverEls = document.querySelectorAll("a, button, [data-cursor='hover'], .cs-node, .bento-card, .cred-card, .timeline-item");
-        hoverEls.forEach(el => {
-            el.addEventListener("mouseenter", () => cursor.classList.add("hovering"));
-            el.addEventListener("mouseleave", () => cursor.classList.remove("hovering"));
-        });
+        /* ----------------------------------------------------------------
+           7. Custom cursor (desktop, fine pointer only)
+           ---------------------------------------------------------------- */
+        var hasFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+        var cursor = document.getElementById("custom-cursor");
+        if (cursor && hasFinePointer && !prefersReducedMotion) {
+            var mouseX = 0, mouseY = 0, curX = 0, curY = 0;
+            var raf = null;
 
-        function updateCursor() {
-            cursorX += (mouseX - cursorX) * speed;
-            cursorY += (mouseY - cursorY) * speed;
-            cursor.style.transform = `translate(${cursorX}px, ${cursorY}px)`;
-            requestAnimationFrame(updateCursor);
-        }
-        updateCursor();
-    } else if (cursor) {
-        cursor.style.display = "none";
-    }
+            window.addEventListener("mousemove", function (e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                if (!raf) raf = requestAnimationFrame(update);
+            });
 
-    // ========================================================================
-    // 9. SIGNAL CANVAS (Idle-Guarded)
-    // ========================================================================
-    const canvas = document.getElementById("signal-canvas");
-    if (canvas && !isMobile && !prefersReducedMotion) {
-        const ctx = canvas.getContext("2d");
-        let width, height;
-        let framesIdle = 0;
-        const MAX_IDLE = 90;
-        let isAnimating = true;
-        let scrollY = window.scrollY;
-        let phase = 0;
-
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener("resize", resize);
-        resize();
-
-        function wakeUp() {
-            framesIdle = 0;
-            if (!isAnimating) {
-                isAnimating = true;
-                renderCanvas();
-            }
-        }
-
-        window.addEventListener("mousemove", wakeUp);
-        window.addEventListener("scroll", () => {
-            scrollY = window.scrollY;
-            wakeUp();
-        }, { passive: true });
-
-        function renderCanvas() {
-            if (!isAnimating) return;
-
-            framesIdle++;
-            if (framesIdle > MAX_IDLE) {
-                isAnimating = false;
-                return;
-            }
-
-            ctx.clearRect(0, 0, width, height);
-
-            phase += 0.015;
-
-            // Get accent color from CSS variable
-            const style = getComputedStyle(document.documentElement);
-            const accentColor = style.getPropertyValue("--accent").trim() || "#D97745";
-
-            ctx.beginPath();
-            ctx.strokeStyle = accentColor;
-            ctx.globalAlpha = 0.3;
-            ctx.lineWidth = 1.5;
-
-            const centerX = width * 0.85;
-
-            for (let y = -50; y < height + 50; y += 8) {
-                const scrollOffset = scrollY * 0.08;
-                const wave = Math.sin(y * 0.008 + phase) * 18
-                           + Math.cos(y * 0.015 - scrollOffset * 0.04) * 12;
-                const x = centerX + wave;
-
-                if (y === -50) {
-                    ctx.moveTo(x, y);
+            function update() {
+                curX += (mouseX - curX) * 0.25;
+                curY += (mouseY - curY) * 0.25;
+                cursor.style.transform = "translate(" + curX + "px," + curY + "px)";
+                if (Math.abs(mouseX - curX) > 0.5 || Math.abs(mouseY - curY) > 0.5) {
+                    raf = requestAnimationFrame(update);
                 } else {
-                    ctx.lineTo(x, y);
+                    raf = null;
                 }
             }
-            ctx.stroke();
-            ctx.globalAlpha = 1;
 
-            requestAnimationFrame(renderCanvas);
+            document.querySelectorAll("a, button, [role='button']").forEach(function (el) {
+                el.addEventListener("mouseenter", function () { cursor.classList.add("hovering"); });
+                el.addEventListener("mouseleave", function () { cursor.classList.remove("hovering"); });
+            });
+        } else if (cursor) {
+            cursor.style.display = "none";
         }
 
-        wakeUp();
-    }
-});
+        /* ----------------------------------------------------------------
+           8. Signal trace — single SVG path, redrawn on scroll (rAF-throttled)
+              Conceptually: a signal settling out of noise as you move
+              through the page — ties directly to the SOC/CTF "find the
+              real signal" theme. Cheap: one path recompute per scroll
+              tick, no canvas, no continuous animation loop.
+           ---------------------------------------------------------------- */
+        var tracePath = document.getElementById("signal-trace-path");
+        var traceSvg = document.getElementById("signal-trace");
+        if (tracePath && traceSvg && !prefersReducedMotion && window.innerWidth > 768) {
+            var traceTicking = false;
+
+            function buildTrace() {
+                var docHeight = Math.max(document.body.scrollHeight, window.innerHeight);
+                traceSvg.setAttribute("viewBox", "0 0 1440 " + docHeight);
+
+                var scrollY = window.scrollY;
+                var progress = scrollY / (docHeight - window.innerHeight || 1);
+                var amplitude = 90 - progress * 40; // settles as you scroll further = "less noise"
+                var points = [];
+                var steps = 24;
+                for (var i = 0; i <= steps; i++) {
+                    var y = (docHeight / steps) * i;
+                    var localNoise = Math.sin(i * 0.9 + progress * 6) * amplitude * (1 - progress * 0.5);
+                    var x = 1440 * 0.92 + localNoise;
+                    points.push(x.toFixed(1) + " " + y.toFixed(1));
+                }
+                tracePath.setAttribute("d", "M " + points.join(" L "));
+            }
+
+            function onScrollOrResize() {
+                if (traceTicking) return;
+                traceTicking = true;
+                requestAnimationFrame(function () {
+                    buildTrace();
+                    traceTicking = false;
+                });
+            }
+
+            buildTrace();
+            window.addEventListener("scroll", onScrollOrResize, { passive: true });
+            window.addEventListener("resize", onScrollOrResize);
+        } else if (traceSvg) {
+            traceSvg.style.display = "none";
+        }
+    });
+})();
